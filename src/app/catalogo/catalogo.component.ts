@@ -1,34 +1,39 @@
 import { Component, OnInit } from '@angular/core';
 import { ServicioService } from '../servicios/servicio.service';
+import { CommonModule } from '@angular/common'; // Importar CommonModule
 import { firstValueFrom } from 'rxjs';
-import { NgFor } from '@angular/common';
 
 @Component({
   selector: 'app-catalogo',
   standalone: true,
-  imports: [NgFor],
+  imports: [CommonModule], // Usar CommonModule para poder usar NgFor
   templateUrl: './catalogo.component.html',
   styleUrls: ['./catalogo.component.css'],
 })
 export class CatalogoComponent implements OnInit {
-  pokemons: any[] = []; // Lista para almacenar todos los Pokémon cargados
+  pokemonList: any[] = [];
+
   constructor(private servicioService: ServicioService) {}
 
   ngOnInit(): void {
     this.getPokemonList();
   }
-  //Toma la lista de pokemons
+
   private getPokemonList(): void {
     this.servicioService.getPokemons().subscribe({
-      next: async (data) => {
+      next: (data) => {
         try {
           // Obtener detalles de cada Pokémon individualmente
           const pokemonRequests = data.results.map((pokemon: any) =>
-            firstValueFrom(this.servicioService.getPokemonName(pokemon.nameOrId))
+            firstValueFrom(this.servicioService.getPokemonName(pokemon.name))
           );
 
-          const pokemonDetails = await Promise.all(pokemonRequests);
-          console.log('Detalles de los Pokémon:', pokemonDetails);
+          Promise.all(pokemonRequests).then((pokemonDetails) => {
+            this.pokemonList = pokemonDetails.map((detail: any) => ({
+              name: detail.name,
+            }));
+            console.log('Detalles de los Pokémon:', this.pokemonList);
+          });
         } catch (error) {
           console.error('Error al obtener detalles de los Pokémon', error);
         }
